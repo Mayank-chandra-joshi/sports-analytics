@@ -116,6 +116,26 @@ If `setup-runtime.sh` cannot find the library, pass its path:
 Webcams are addressed by avfoundation index — `sa run 0` for the first camera,
 `0:0` for video+audio — rather than by a `/dev/video*` path.
 
+## Streaming from another machine
+
+Run the tracker on one machine and feed it video from another — useful when
+the fast machine is not the one holding the footage.
+
+```bash
+# on the machine WITH the video
+./scripts/run_stream.sh                    # pick a file, pick a target
+./scripts/run_stream.sh clip.mp4 192.168.1.3
+
+# on the machine RUNNING the tracker
+./target/release/sa run "udp://0.0.0.0:9000" --preview
+```
+
+`run_stream.sh` opens a file picker (GUI where there is one, a numbered list
+otherwise), remembers the last target IP and directory, and loops the clip
+until Ctrl-C. `PORT=9001 ./scripts/run_stream.sh` to use another port.
+
+Either side can be started first — the receiver waits for the stream.
+
 ## CLI
 
 ```bash
