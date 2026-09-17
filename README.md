@@ -19,19 +19,48 @@ Design and rationale: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 ## Quick start
 
 ```bash
-# 1. ONNX Runtime (free; a Python wheel is the easiest source)
-pip install onnxruntime            # or onnxruntime-gpu for CUDA/TensorRT
-./scripts/setup-runtime.sh         # links it into runtime/
+git clone <this repo> && cd sports-analytics
+./scripts/setup.sh
+```
 
-# 2. Models (YOLO11 COCO baseline — person + ball)
-pip install ultralytics onnx onnxsim
-python3 scripts/export-models.py
-./target/release/sa models         # verify hashes against models/manifest.toml
+That links the ONNX Runtime library, exports the models, picks the right
+hardware acceleration for this machine and builds the engine. Safe to
+re-run — after a `git pull` it rebuilds only what changed.
 
-# 3. Build and run
-cargo build --release -p sa-cli
+```bash
+./scripts/setup.sh --app          # also build the desktop app
+./scripts/setup.sh --cpu          # force the CPU build
+./scripts/setup.sh --skip-models  # keep the models already present
+```
+
+It does not install Rust, Node, ffmpeg or Python — those want your package
+manager, so it names the command for your platform and stops:
+
+```bash
+# macOS
+brew install rust node ffmpeg python@3.12
+# Debian/Ubuntu
+sudo apt install ffmpeg python3 && curl https://sh.rustup.rs -sSf | sh
+```
+
+Then run it:
+
+```bash
 ./target/release/sa run samples/clip.mp4 --preview
 ```
+
+<details>
+<summary>Doing it by hand instead</summary>
+
+```bash
+pip install onnxruntime             # or onnxruntime-gpu for CUDA
+./scripts/setup-runtime.sh          # links it into runtime/
+pip install ultralytics onnx onnxsim
+python3 scripts/export-models.py
+cargo build --release -p sa-cli     # add --features coreml / cuda
+./target/release/sa models          # verify hashes against the manifest
+```
+</details>
 
 `--preview` prints a loopback MJPEG URL you can open in any browser.
 
