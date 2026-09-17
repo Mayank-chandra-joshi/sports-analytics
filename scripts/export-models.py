@@ -24,9 +24,16 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 MODELS = ROOT / "models"
 
+# (weights, height, width, filename, why)
+#
+# The 16:9 entry is the DEFAULT in sa.toml and must always be exported:
+# broadcast footage is 16:9, and letterboxing it into a square spends ~44%
+# of the network on grey bars. Measured on a 4-core CPU: 640x640 = 154 ms,
+# 384x672 = 88 ms, with MORE horizontal detail than a 512 square.
 DETECTORS = [
-    ("yolo11n", "yolo11n-coco-640.onnx", "fast, CPU-friendly baseline"),
-    ("yolo11s", "yolo11s-coco-640.onnx", "better recall on small/far players"),
+    ("yolo11n", 384, 672, "yolo11n-coco-384x672.onnx", "default: 16:9, no letterbox waste"),
+    ("yolo11n", 640, 640, "yolo11n-coco-640.onnx", "square baseline, for comparison"),
+    ("yolo11s", 640, 640, "yolo11s-coco-640.onnx", "better recall on small/far players"),
 ]
 
 
@@ -38,7 +45,13 @@ def sha256(p: Path) -> str:
     return h.hexdigest()
 
 
-def export_detector(name: str, out: str, imgsz: int = 640) -> Path:
+def export_detector(name: str, h: int, w: int, out: str) -> Path:
+    """Export one detector at a given input shape.
+
+    `imgsz` takes [height, width]; a non-square shape is the point for 16:9
+    footage, and Ultralytics supports it for ONNX export (it warns that
+    `yolo val` needs square input, which does not apply to us).
+    """
     from ultralytics import YOLO
 
     dst = MODELS / out
@@ -46,7 +59,7 @@ def export_detector(name: str, out: str, imgsz: int = 640) -> Path:
         print(f"  {out} already present — skipping")
         return dst
     m = YOLO(f"{name}.pt")
-    p = m.export(format="onnx", imgsz=imgsz, opset=17, simplify=True, dynamic=False)
+    p = m.export(format="onnx", imgsz=[h, w], opset=17, simplify=True, dynamic=False)
     MODELS.mkdir(exist_ok=True)
     shutil.copy(p, dst)
     return dst
@@ -81,15 +94,31 @@ def main() -> int:
     args = ap.parse_args()
 
     if args.list:
-        for name, out, why in DETECTORS:
-            print(f"{name:10} -> models/{out}   ({why})")
+        for name, h, w, out, why in DETECTORS:
+            print(f"{name:10} {w}x{h:<4} -> models/{out}   ({why})")
         print("osnet_x1_0 -> models/osnet-x1_0-256x128.onnx   (--reid)")
         return 0
 
+    # Fail with an instruction, not a traceback: a missing dependency here is
+    # the single most likely first-run problem, and `ModuleNotFoundError`
+    # buried in a stack trace tells a new user nothing actionable.
+    try:
+        import ultralytics  # noqa: F401
+    except ImportError:
+        print(
+            "ultralytics is not installed for this interpreter "
+            f"({sys.executable}).\n\n"
+            "  pip3 install ultralytics onnx onnxsim\n"
+            "  # or, if pip refuses on a managed system:\n"
+            "  pip3 install --break-system-packages ultralytics onnx onnxsim\n",
+            file=sys.stderr,
+        )
+        return 1
+
     made: list[Path] = []
     print("exporting detectors…")
-    for name, out, _ in DETECTORS:
-        made.append(export_detector(name, out))
+    for name, h, w, out, _ in DETECTORS:
+        made.append(export_detector(name, h, w, out))
     if args.reid:
         print("exporting ReID…")
         p = export_reid()

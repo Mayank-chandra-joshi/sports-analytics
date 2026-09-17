@@ -27,7 +27,7 @@ use sa_analytics::{BallParams, BallTracker, LiveAnalytics};
 use sa_core::profile::{ClassMap, FieldModel};
 use sa_core::{BallState, Class, Config, Error, Frame, FrameState, LiveStats, Result, StageLatency, Team, Track};
 use sa_identity::{kit_reading, on_playing_surface, surface_colour, LiveTeamClassifier, KIT_MIN_CONTRAST};
-use sa_infer::{Detector, Embedder, MockDetector, OsnetEmbedder, PitchKeypoints, YoloDetector, YoloOptions, YoloPoseKeypoints};
+use sa_infer::{Detector, Embedder, OsnetEmbedder, PitchKeypoints, YoloDetector, YoloOptions, YoloPoseKeypoints};
 use sa_ingest::{Ingest, IngestOptions, Source, SourceInfo};
 use sa_pitch::{foot_point, Calibrator, CalibratorParams, Football, FootballDims};
 use sa_track::{Input, Tracker};
@@ -146,8 +146,26 @@ impl Engine {
                 YoloOptions { input_size: cfg.detection.input_size, conf: cfg.detection.conf, iou_nms: cfg.detection.iou_nms, threads: cfg.detection.threads, classes },
             )?)
         } else {
-            tracing::warn!(path = %det_path.display(), "detector model not found — running with a mock detector");
-            Box::new(MockDetector)
+            // REFUSE, do not degrade. A mock detector finds nothing, so the
+            // app comes up looking healthy and simply never draws a box —
+            // which is indistinguishable from "the tracker is bad" and sends
+            // the user hunting in the wrong place. The fix is always the
+            // same one command, so say it.
+            let available: Vec<String> = std::fs::read_dir(opts.root.join("models"))
+                .map(|rd| {
+                    rd.filter_map(|e| e.ok())
+                        .map(|e| e.file_name().to_string_lossy().to_string())
+                        .filter(|n| n.ends_with(".onnx"))
+                        .collect()
+                })
+                .unwrap_or_default();
+            return Err(Error::Model(format!(
+                "detector model not found: {}\n\
+                 Run `python3 scripts/export-models.py` to create it.\n\
+                 Models present: {}",
+                det_path.display(),
+                if available.is_empty() { "(none)".to_string() } else { available.join(", ") }
+            )));
         };
         let embedder: Option<Box<dyn Embedder>> = match (&cfg.reid.enabled, &cfg.reid.model) {
             (true, Some(p)) if opts.root.join(p).is_file() => Some(Box::new(OsnetEmbedder::load(&opts.root.join(p), cfg.detection.threads)?)),
