@@ -9,7 +9,11 @@ use sha2::{Digest, Sha256};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ModelEntry {
+    /// Optional: `models/local.toml` records only file+hash, and an entry is
+    /// identified by its file either way.
+    #[serde(default)]
     pub name: String,
+    #[serde(default)]
     pub task: String,
     pub file: String,
     #[serde(default)]

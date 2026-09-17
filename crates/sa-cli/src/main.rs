@@ -88,6 +88,13 @@ fn load_config(root: &std::path::Path, path: Option<PathBuf>) -> anyhow::Result<
 }
 
 fn main() -> anyhow::Result<()> {
+    // `sa models | head` closes the pipe early, and Rust's default SIGPIPE
+    // handling turns the next println into a panic. A CLI should end quietly
+    // when its reader goes away.
+    #[cfg(unix)]
+    unsafe {
+        libc::signal(libc::SIGPIPE, libc::SIG_DFL);
+    }
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()))
         .with_target(false)
@@ -204,6 +211,11 @@ fn main() -> anyhow::Result<()> {
         Cmd::Models => {
             let dir = root.join("models");
             let manifest = sa_infer::manifest::Manifest::load(&dir).ok();
+            // Locally-exported hashes, when present. The committed manifest
+            // deliberately carries none for these — see models/manifest.toml.
+            let local: Option<sa_infer::manifest::Manifest> = std::fs::read_to_string(dir.join("local.toml"))
+                .ok()
+                .and_then(|s| toml::from_str(&s).ok());
             for e in std::fs::read_dir(&dir)? {
                 let e = e?;
                 let name = e.file_name().to_string_lossy().to_string();
@@ -212,14 +224,24 @@ fn main() -> anyhow::Result<()> {
                 }
                 let size = e.metadata().map(|m| m.len()).unwrap_or(0);
                 let listed = manifest.as_ref().and_then(|m| m.models.iter().find(|x| x.file == name));
-                let status = match listed {
-                    Some(m) if !m.sha256.is_empty() => match sa_infer::manifest::sha256_file(&e.path()) {
-                        Ok(h) if h.eq_ignore_ascii_case(&m.sha256) => "verified".to_string(),
-                        Ok(_) => "HASH MISMATCH".to_string(),
+                // Prefer a distributed hash; fall back to the local record.
+                let expect = listed
+                    .filter(|m| !m.sha256.is_empty())
+                    .map(|m| (m.sha256.clone(), "verified"))
+                    .or_else(|| {
+                        local.as_ref()
+                            .and_then(|l| l.models.iter().find(|x| x.file == name))
+                            .filter(|m| !m.sha256.is_empty())
+                            .map(|m| (m.sha256.clone(), "ok (local export)"))
+                    });
+                let status = match (listed, expect) {
+                    (_, Some((want, label))) => match sa_infer::manifest::sha256_file(&e.path()) {
+                        Ok(h) if h.eq_ignore_ascii_case(&want) => label.to_string(),
+                        Ok(_) => "CHANGED since export".to_string(),
                         Err(e) => format!("unreadable: {e}"),
                     },
-                    Some(_) => "listed (no hash)".into(),
-                    None => "not in manifest".into(),
+                    (Some(_), None) => "listed (run export-models.py to record a hash)".into(),
+                    (None, None) => "not in manifest".into(),
                 };
                 println!("{name:40} {:>8.1} MB  {status}", size as f64 / 1e6);
             }

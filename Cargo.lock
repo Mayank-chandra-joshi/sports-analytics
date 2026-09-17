@@ -3204,10 +3204,12 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "libc",
  "sa-core",
  "sa-engine",
  "sa-infer",
  "serde_json",
+ "toml 0.8.2",
  "tracing",
  "tracing-subscriber",
 ]

@@ -125,9 +125,20 @@ def main() -> int:
         if p:
             made.append(p)
 
-    print("\nAdd or update these entries in models/manifest.toml:\n")
-    for p in made:
-        print(f'  # {p.name}\n  sha256 = "{sha256(p)}"')
+    # Record what THIS machine produced. The committed manifest cannot carry
+    # these — exports are not byte-identical across architectures — but a
+    # local record still catches a model that changes underneath you.
+    local = MODELS / "local.toml"
+    lines = [
+        "# Hashes of the models exported on THIS machine, written by",
+        "# scripts/export-models.py. Gitignored: an export on another",
+        "# architecture produces different bytes for the same weights.",
+        "",
+    ]
+    for p in sorted(MODELS.glob("*.onnx")):
+        lines += ["[[model]]", f'file    = "{p.name}"', f'sha256  = "{sha256(p)}"', ""]
+    local.write_text("\n".join(lines))
+    print(f"\nexported {len(made)} model(s); hashes recorded in {local.relative_to(ROOT)}")
     return 0
 
 

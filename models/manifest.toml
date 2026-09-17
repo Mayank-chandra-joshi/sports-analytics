@@ -1,6 +1,17 @@
-# Every model the engine may load. A file whose hash does not match is
-# refused; nothing here is ever downloaded at runtime. Add an entry with
-# `sha256sum models/<file>` after exporting or fetching a model.
+# Every model the engine may load.
+#
+# WHY MOST ENTRIES HAVE NO HASH. These models are EXPORTED on each machine by
+# `scripts/export-models.py`, and PyTorch/ONNX do not produce byte-identical
+# files across architectures — the same weights exported on x86 Linux and on
+# arm64 macOS differ. A hash committed here would therefore be wrong for
+# everybody except the machine that generated it, and "HASH MISMATCH" on a
+# correct file teaches people to ignore the check.
+#
+# So: a hash is recorded for models we DISTRIBUTE (where the bytes are fixed
+# and tampering is the thing being guarded against), and omitted for models
+# each user exports. `export-models.py` writes the locally-exported hashes to
+# `models/local.toml`, which is gitignored and checked the same way — so a
+# model that changes UNDER YOU is still caught, without false alarms.
 
 [[model]]
 name    = "yolo11n-coco"
@@ -8,7 +19,7 @@ task    = "detect"
 file    = "yolo11n-coco-640.onnx"
 input   = [640, 640]
 classes = ["person", "...", "sports ball"]   # COCO 80; the engine maps 0 and 32
-sha256  = "568640a9ef1cb52a7865bf24324e1be470fb931193f7cc6bb6125e05b85fc76d"
+sha256  = ""   # exported locally; see local.toml
 licence = "AGPL-3.0 (Ultralytics) — free for development and open-source use; see docs/ARCHITECTURE.md §13"
 
 [[model]]
@@ -17,7 +28,7 @@ task    = "detect"
 file    = "yolo11n-coco-384x672.onnx"
 input   = [384, 672]
 classes = ["person", "...", "sports ball"]
-sha256  = "17fc48930d3586068af6b7e56e6518d11bb48136c47673c6b03e11fc3da20700"
+sha256  = ""   # exported locally; see local.toml
 licence = "AGPL-3.0 (Ultralytics)"
 
 
@@ -27,7 +38,7 @@ task    = "detect"
 file    = "yolo11s-coco-640.onnx"
 input   = [640, 640]
 classes = ["person", "...", "sports ball"]
-sha256  = "773fc9fbe7de69abffde41bb4a3f154351df0036cc68c7c33b001c807e51ff38"
+sha256  = ""   # exported locally; see local.toml
 licence = "AGPL-3.0 (Ultralytics)"
 
 # --- not yet present; add after running scripts/fetch-models.sh -------------
