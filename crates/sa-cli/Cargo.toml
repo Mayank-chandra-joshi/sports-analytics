@@ -1,0 +1,35 @@
+[package]
+name = "sa-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Headless runner and benchmark for the sports-analytics engine."
+
+[[bin]]
+name = "sa"
+path = "src/main.rs"
+
+[features]
+default = []
+# Hardware acceleration. Pick the one your machine has; CPU is always the
+# fallback, so a binary built with a feature its host lacks still runs.
+#   coreml   — Apple Silicon (M-series): Neural Engine + GPU
+#   cuda     — NVIDIA
+#   tensorrt — NVIDIA, faster still, needs TensorRT installed
+#   openvino — Intel CPU/iGPU
+#   directml — Windows, any DirectX 12 GPU
+coreml = ["sa-engine/coreml"]
+cuda = ["sa-engine/cuda"]
+tensorrt = ["sa-engine/tensorrt"]
+openvino = ["sa-engine/openvino"]
+directml = ["sa-engine/directml"]
+
+[dependencies]
+sa-core.workspace = true
+sa-engine.workspace = true
+sa-infer.workspace = true
+anyhow.workspace = true
+clap.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true

@@ -1,0 +1,11 @@
+[package]
+name = "sa-track"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Multi-object tracking: BoT-SORT-style Kalman + two-pass IoU/appearance association."
+
+[dependencies]
+sa-core.workspace = true
+nalgebra.workspace = true
+tracing.workspace = true

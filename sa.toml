@@ -1,0 +1,60 @@
+# Engine configuration. Every field has a default that runs; anything left
+# out here uses it. Thresholds follow the reference POC's config.yaml so
+# tuning knowledge carries over.
+
+[video]
+target_width = 1280   # engine working resolution; boxes and calibration live here
+detect_every = 0      # 0 = adapt to measured detector speed; 1 = every frame
+queue_depth  = 2      # frames buffered between stages (drop-oldest on live)
+hwaccel      = true   # use a GPU decoder when ffmpeg finds one
+loop_file    = false
+
+[detection]
+model      = "models/yolo11n-coco-384x672.onnx"   # 16:9 input: no letterbox waste
+input_size = 672   # fallback only; the real shape is read from the model
+conf       = 0.45   # below this a COCO model labels crowd and shirt prints as people
+iou_nms    = 0.5
+class_map  = "coco"   # or "roboflow_football" for a football-trained model
+threads    = 0
+surface_tolerance = 60.0   # reject people not standing on the playing surface; 0 disables        # 0 = all cores
+
+[tracker]
+high_thresh       = 0.45   # starts and extends tracks (ByteTrack pass 1)
+low_thresh        = 0.15   # extends only (pass 2) — keeps occluded players alive
+match_iou         = 0.15   # loose enough for a slow detector; see profile.rs
+track_buffer      = 60     # frames a lost track survives
+min_hits          = 1    # 1 detection is enough to draw a ring
+max_speed_mps     = 10.0
+appearance_weight = 0.3    # ReID vs IoU in the cost, when embeddings exist
+
+[reid]
+enabled           = false  # needs an OSNet ONNX export; see README
+reembed_interval  = 6
+
+[pitch]
+enabled        = true
+# keypoint_model = "models/football-pitch-32kp-640.onnx"
+keypoint_input = 640
+keypoint_conf  = 0.5
+keyframe_every = 15    # solve on a side thread every N frames, interpolate between
+max_gap        = 30    # beyond this, report NO calibration rather than guess
+ransac_px      = 6.0
+min_inliers    = 6
+length_m       = 105.0
+width_m        = 68.0
+on_pitch_margin_m = 2.0
+
+[analytics]
+enabled               = true
+possession_radius_m   = 2.5   # nearest player within this holds the ball...
+possession_min_frames = 3     # ...for at least this many consecutive frames
+speed_ceiling_mps     = 12.0  # steps implying more are rejected, not clamped
+smoothing_window      = 5
+heatmap_cells         = [21, 14]
+
+[output]
+preview_quality = 70   # quality, not size: downscaling desyncs overlay geometry
+preview_width   = 0     # 0 = engine working width, so overlays line up exactly
+record          = false
+# record_path   = "outputs/session.mp4"
+# session_log   = "outputs/session/session.jsonl"

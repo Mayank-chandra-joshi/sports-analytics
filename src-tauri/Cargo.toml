@@ -1,0 +1,41 @@
+[package]
+name = "sports-analytics"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Offline real-time sports tracker (desktop shell)"
+
+[lib]
+# The `_lib` suffix keeps the lib name distinct from the bin name on Windows.
+name = "sports_analytics_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[features]
+default = []
+# Hardware acceleration. Pick the one your machine has; CPU is always the
+# fallback, so a binary built with a feature its host lacks still runs.
+#   coreml   — Apple Silicon (M-series): Neural Engine + GPU
+#   cuda     — NVIDIA
+#   tensorrt — NVIDIA, faster still, needs TensorRT installed
+#   openvino — Intel CPU/iGPU
+#   directml — Windows, any DirectX 12 GPU
+coreml = ["sa-engine/coreml"]
+cuda = ["sa-engine/cuda"]
+tensorrt = ["sa-engine/tensorrt"]
+openvino = ["sa-engine/openvino"]
+directml = ["sa-engine/directml"]
+
+[dependencies]
+sa-core.workspace = true
+sa-engine.workspace = true
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-dialog = "2"
+serde.workspace = true
+serde_json.workspace = true
+parking_lot.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true

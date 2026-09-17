@@ -1,0 +1,12 @@
+[package]
+name = "sa-pitch"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Field models, keypoint->homography (DLT+RANSAC), keyframe interpolation, calibration state."
+
+[dependencies]
+sa-core.workspace = true
+sa-infer.workspace = true
+nalgebra.workspace = true
+tracing.workspace = true

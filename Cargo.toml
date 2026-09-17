@@ -1,0 +1,63 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/sa-core",
+    "crates/sa-ingest",
+    "crates/sa-infer",
+    "crates/sa-track",
+    "crates/sa-pitch",
+    "crates/sa-identity",
+    "crates/sa-analytics",
+    "crates/sa-render",
+    "crates/sa-engine",
+    "crates/sa-cli",
+    "src-tauri",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[workspace.dependencies]
+sa-core = { path = "crates/sa-core" }
+sa-ingest = { path = "crates/sa-ingest" }
+sa-infer = { path = "crates/sa-infer" }
+sa-track = { path = "crates/sa-track" }
+sa-pitch = { path = "crates/sa-pitch" }
+sa-identity = { path = "crates/sa-identity" }
+sa-analytics = { path = "crates/sa-analytics" }
+sa-render = { path = "crates/sa-render" }
+sa-engine = { path = "crates/sa-engine" }
+
+anyhow = "1"
+thiserror = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+crossbeam-channel = "0.5"
+parking_lot = "0.12"
+rayon = "1"
+nalgebra = "0.33"
+ndarray = "0.16"
+image = { version = "0.25", default-features = false, features = ["jpeg", "png"] }
+imageproc = { version = "0.25", default-features = false }
+fast_image_resize = "5"
+jpeg-encoder = { version = "0.6", features = ["simd"] }
+ort = { version = "2.0.0-rc.10", default-features = false, features = ["ndarray", "load-dynamic", "std"] }
+pathfinding = "4"
+clap = { version = "4", features = ["derive"] }
+sha2 = "0.10"
+hex = "0.4"
+bincode = "1"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 4
+debug = 1
+
+[profile.dev.package."*"]
+opt-level = 2

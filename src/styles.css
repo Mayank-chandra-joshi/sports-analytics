@@ -1,0 +1,76 @@
+:root {
+  --bg: #0f1216;
+  --panel: #171b21;
+  --panel-2: #1f242c;
+  --border: #2a313b;
+  --text: #e6e9ee;
+  --muted: #9aa3b0;
+  --accent: #3ddc84;
+  --danger: #ff5c5c;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--bg);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); overflow: hidden; }
+#root { height: 100vh; }
+
+.app { display: flex; flex-direction: column; height: 100vh; }
+header { display: flex; align-items: center; gap: 16px; padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--panel); }
+.brand { font-weight: 700; font-size: 15px; white-space: nowrap; }
+.tag { font-weight: 500; color: var(--muted); font-size: 12px; margin-left: 6px; }
+.source-row { display: flex; gap: 8px; flex: 1; align-items: center; }
+.source-row input[type="text"], .source-row input:not([type]) { flex: 1; }
+
+input, select, button { font: inherit; color: var(--text); background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; }
+input[type="number"] { width: 80px; }
+button { cursor: pointer; }
+button:hover:not(:disabled) { border-color: #3f4956; }
+button:disabled { opacity: 0.5; cursor: default; }
+button.primary { background: var(--accent); color: #05240f; border-color: var(--accent); font-weight: 600; }
+button.danger { background: var(--danger); color: #2a0000; border-color: var(--danger); font-weight: 600; }
+.chk { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); white-space: nowrap; }
+.spacer { flex: 1; }
+.error { margin: 8px 14px 0; padding: 8px 12px; background: #3a1a1a; border: 1px solid #6a2a2a; border-radius: 6px; color: #ffb3b3; }
+
+main { display: grid; grid-template-columns: 1fr 440px; gap: 12px; padding: 12px 14px; flex: 1; min-height: 0; }
+.left { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.right { display: flex; flex-direction: column; gap: 10px; overflow: auto; }
+
+.video { position: relative; width: 100%; background: #000; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); max-height: calc(100vh - 150px); }
+/* EVERY layer fills the container identically. The picture and the overlay
+   are different pixel sizes — the preview JPEG is downscaled to save encode
+   cost, while overlay coordinates stay in engine space — so they can only
+   line up if both are stretched the same way. The container's aspect-ratio
+   matches the source, so "stretch to fill" introduces no distortion, and
+   any `object-fit` here would letterbox one layer but not the other and put
+   a constant offset between the rings and the players. */
+.video img, .video canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: fill; }
+.video canvas { pointer-events: none; }
+.video.picking { cursor: crosshair; outline: 2px solid var(--accent); }
+.video-empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); }
+
+.toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.hint { color: var(--muted); }
+.hint b { color: var(--text); }
+
+.pad { width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--border); }
+
+.stats { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+.teams-header { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.ref-line { color: var(--muted); font-size: 12px; display: flex; align-items: center; gap: 6px; }
+.swatch { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); }
+.stat-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
+.stat-a { text-align: left; font-variant-numeric: tabular-nums; font-weight: 600; }
+.stat-b { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.stat-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; padding: 0 12px; }
+.stat-note { color: var(--muted); font-size: 12px; }
+.perf { display: flex; flex-wrap: wrap; gap: 4px 12px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; border-top: 1px solid var(--border); padding-top: 6px; margin-top: 2px; }
+
+.settings { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; }
+.settings summary { cursor: pointer; font-weight: 600; }
+.settings label { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 8px 0; color: var(--muted); }
+.settings label select { max-width: 220px; }
+.settings .inline { display: inline-flex; gap: 6px; align-items: center; }
+.summary { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 8px; font-size: 11px; max-height: 160px; overflow: auto; white-space: pre-wrap; }

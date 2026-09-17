@@ -1,0 +1,51 @@
+# Every model the engine may load. A file whose hash does not match is
+# refused; nothing here is ever downloaded at runtime. Add an entry with
+# `sha256sum models/<file>` after exporting or fetching a model.
+
+[[model]]
+name    = "yolo11n-coco"
+task    = "detect"
+file    = "yolo11n-coco-640.onnx"
+input   = [640, 640]
+classes = ["person", "...", "sports ball"]   # COCO 80; the engine maps 0 and 32
+sha256  = "0db36d9937c48a05c06e297b059110dd53b035ea507bd3f687988aa021272d65"
+licence = "AGPL-3.0 (Ultralytics) — free for development and open-source use; see docs/ARCHITECTURE.md §13"
+
+[[model]]
+name    = "yolo11n-coco-384x672"
+task    = "detect"
+file    = "yolo11n-coco-384x672.onnx"
+input   = [384, 672]
+classes = ["person", "...", "sports ball"]
+sha256  = "0f9807fdac02f12c110fc1150c07b0da7e078639cc4abf285af15d8cff95da78"
+licence = "AGPL-3.0 (Ultralytics)"
+
+[[model]]
+name    = "yolo11n-coco-512"
+task    = "detect"
+file    = "yolo11n-coco-512.onnx"
+input   = [512, 512]
+classes = ["person", "...", "sports ball"]
+sha256  = "5efc0b89995c352825e8dbab423f3a4e87a3f1faed8b0bbe76f90ed62bdf7cc4"
+licence = "AGPL-3.0 (Ultralytics)"
+
+[[model]]
+name    = "yolo11s-coco"
+task    = "detect"
+file    = "yolo11s-coco-640.onnx"
+input   = [640, 640]
+classes = ["person", "...", "sports ball"]
+sha256  = "a4e1e58b1dfc7bbce41929da2e526104ed6bbb52082a55085346f47d84f65c5e"
+licence = "AGPL-3.0 (Ultralytics)"
+
+# --- not yet present; add after running scripts/fetch-models.sh -------------
+# [[model]]
+# name    = "football-players"        # roboflow football-players-detection
+# task    = "detect"
+# file    = "football-players-640.onnx"
+# classes = ["ball", "goalkeeper", "player", "referee"]
+#
+# [[model]]
+# name    = "football-pitch-keypoints"  # roboflow football-field-detection, 32 kp
+# task    = "keypoints"
+# file    = "football-pitch-32kp-640.onnx"

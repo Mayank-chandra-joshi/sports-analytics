@@ -1,0 +1,37 @@
+[package]
+name = "sa-engine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "The pipeline: ingest -> detect -> track -> identity -> pitch -> analytics -> outputs."
+
+[features]
+default = []
+# Hardware acceleration. Pick the one your machine has; CPU is always the
+# fallback, so a binary built with a feature its host lacks still runs.
+#   coreml   — Apple Silicon (M-series): Neural Engine + GPU
+#   cuda     — NVIDIA
+#   tensorrt — NVIDIA, faster still, needs TensorRT installed
+#   openvino — Intel CPU/iGPU
+#   directml — Windows, any DirectX 12 GPU
+coreml = ["sa-infer/coreml"]
+cuda = ["sa-infer/cuda"]
+tensorrt = ["sa-infer/tensorrt"]
+openvino = ["sa-infer/openvino"]
+directml = ["sa-infer/directml"]
+
+[dependencies]
+sa-core.workspace = true
+sa-ingest.workspace = true
+sa-infer.workspace = true
+sa-track.workspace = true
+sa-pitch.workspace = true
+sa-identity.workspace = true
+sa-analytics.workspace = true
+sa-render.workspace = true
+anyhow.workspace = true
+crossbeam-channel.workspace = true
+parking_lot.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
