@@ -87,11 +87,42 @@ def export_reid(out: str = "osnet-x1_0-256x128.onnx") -> Path | None:
     return dst
 
 
+def record_hashes() -> Path:
+    """Write `models/local.toml` from whatever .onnx files are present.
+
+    Deliberately independent of the export toolchain: recording what is on
+    disk needs nothing but hashlib, and tying it to `ultralytics` meant a
+    machine with perfectly good models but no training library could never
+    produce the file — which reported every model as unverified.
+    """
+    local = MODELS / "local.toml"
+    lines = [
+        "# Hashes of the models present on THIS machine, written by",
+        "# scripts/export-models.py. Gitignored: an export on another",
+        "# architecture produces different bytes for the same weights.",
+        "",
+    ]
+    n = 0
+    for p in sorted(MODELS.glob("*.onnx")):
+        lines += ["[[model]]", f'file    = "{p.name}"', f'sha256  = "{sha256(p)}"', ""]
+        n += 1
+    MODELS.mkdir(exist_ok=True)
+    local.write_text("\n".join(lines))
+    print(f"recorded {n} model hash(es) in {local.relative_to(ROOT)}")
+    return local
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--reid", action="store_true", help="also export the OSNet appearance model")
     ap.add_argument("--list", action="store_true", help="print what would be exported and exit")
+    ap.add_argument("--hashes-only", action="store_true",
+                    help="just record hashes for the models already present")
     args = ap.parse_args()
+
+    if args.hashes_only:
+        record_hashes()
+        return 0
 
     if args.list:
         for name, h, w, out, why in DETECTORS:
@@ -102,12 +133,20 @@ def main() -> int:
     # Fail with an instruction, not a traceback: a missing dependency here is
     # the single most likely first-run problem, and `ModuleNotFoundError`
     # buried in a stack trace tells a new user nothing actionable.
+    missing = [d[3] for d in DETECTORS if not (MODELS / d[3]).is_file()]
     try:
         import ultralytics  # noqa: F401
     except ImportError:
+        if not missing:
+            # Everything is already exported: there is nothing for the
+            # training library to do, so its absence is not a failure.
+            print("all models already present; recording hashes only")
+            record_hashes()
+            return 0
         print(
             "ultralytics is not installed for this interpreter "
             f"({sys.executable}).\n\n"
+            f"  missing: {', '.join(missing)}\n\n"
             "  pip3 install ultralytics onnx onnxsim\n"
             "  # or, if pip refuses on a managed system:\n"
             "  pip3 install --break-system-packages ultralytics onnx onnxsim\n",
@@ -125,20 +164,8 @@ def main() -> int:
         if p:
             made.append(p)
 
-    # Record what THIS machine produced. The committed manifest cannot carry
-    # these — exports are not byte-identical across architectures — but a
-    # local record still catches a model that changes underneath you.
-    local = MODELS / "local.toml"
-    lines = [
-        "# Hashes of the models exported on THIS machine, written by",
-        "# scripts/export-models.py. Gitignored: an export on another",
-        "# architecture produces different bytes for the same weights.",
-        "",
-    ]
-    for p in sorted(MODELS.glob("*.onnx")):
-        lines += ["[[model]]", f'file    = "{p.name}"', f'sha256  = "{sha256(p)}"', ""]
-    local.write_text("\n".join(lines))
-    print(f"\nexported {len(made)} model(s); hashes recorded in {local.relative_to(ROOT)}")
+    print(f"\nexported {len(made)} model(s)")
+    record_hashes()
     return 0
 
 

@@ -100,6 +100,10 @@ step "Models"
 if [ "$SKIP_MODELS" = 1 ]; then
   ok "skipped (--skip-models)"
 elif ls models/*.onnx >/dev/null 2>&1; then
+  # Present but maybe never hash-recorded (e.g. copied from elsewhere, or
+  # exported before local.toml existed). Cheap, and makes `sa models`
+  # report them as checked rather than unverified.
+  [ -f models/local.toml ] || python3 scripts/export-models.py --hashes-only >/dev/null 2>&1
   ok "already exported ($(ls models/*.onnx | wc -l | tr -d ' ') files)"
 else
   python3 -c "import ultralytics" 2>/dev/null || {
