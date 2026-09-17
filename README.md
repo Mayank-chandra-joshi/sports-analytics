@@ -76,6 +76,21 @@ npm run tauri dev        # or: npm run tauri build
 
 ---
 
+### If the runtime will not load
+
+`failed to load onnxruntime dylib` / `Dlopen` means the ONNX Runtime library
+in `runtime/` is present but unusable. Run:
+
+```bash
+./scripts/fix-runtime.sh
+```
+
+It checks, in the order these actually break: Python architecture (a Rosetta
+python installs an x86_64 wheel that cannot load into an arm64 binary), a
+dangling symlink, the library's own architecture, macOS quarantine, and
+finally whether the dynamic linker will load it at all — then repairs what it
+can. `--check` reports without changing anything.
+
 ## Hardware acceleration
 
 CPU is the default and always works. Build with the flag for your machine to

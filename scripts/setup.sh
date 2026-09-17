@@ -94,6 +94,12 @@ else
   fi
   ok "linked runtime/$LIB"
 fi
+# Present is not the same as loadable — an x86_64 wheel under Rosetta, or a
+# quarantined download, both sit there looking fine and fail at dlopen.
+if ! ./scripts/fix-runtime.sh --check >/dev/null 2>&1; then
+  warn "the library is present but does not load — diagnosing"
+  ./scripts/fix-runtime.sh || die "could not repair the runtime (see above)"
+fi
 
 # ----------------------------------------------------------------- 4. models --
 step "Models"
